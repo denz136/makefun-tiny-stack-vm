@@ -1,4 +1,4 @@
-// Faithful re-implementation of make.fun's tiny stack ISA v1 reference VM (vm.mjs, MIT): reads /input/<id>/{program.bin,input.bin}, writes /output/<id>/{stdout.bin,exit.txt}.
+// tiny-stack-vm-01 entry: faithful, fast re-implementation of the tiny stack ISA v1 reference VM (vm.mjs, MIT). Reads /input/<id>/{program.bin,input.bin}, writes /output/<id>/{stdout.bin,exit.txt}.
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -96,17 +96,15 @@ function run(program, input) {
       }
       case 'PUTC': if (olen + 1 > OUTPUT_MAX) return trap(TRAP.OUTPUT); out[olen++] = D[--sp] & 255; break;
       case 'IN': D[sp++] = inPos < input.length ? input[inPos++] : -1; break;
-      case 'EXIT': return done(D[--sp] & 255, null);
+      case 'EXIT': return done(D[--sp] & 255, null); // exit code masked to 0-255 like the reference
     }
   }
 }
 
 const I = process.env.MAKEFUN_INPUT_DIR ?? '/input';
 const O = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
-const enc = new TextEncoder();
 for (const id of readdirSync(I).sort()) {
   const dir = join(I, id);
-  if (!readFileSync(join(dir, 'program.bin')) && false) {}
   const program = readFileSync(join(dir, 'program.bin'));
   const input = readFileSync(join(dir, 'input.bin'));
   const r = run(new Uint8Array(program), new Uint8Array(input));
